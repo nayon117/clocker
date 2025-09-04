@@ -13,25 +13,41 @@ const init = {
 };
 
 const TIMEZONE_OFFSET = {
-  PST: 7,
-  EST: 4
-}
+  PST: -7 * 60,
+  EST: -4 * 60,
+  EDT: -4 * 60,
+  BST: 1 * 60,
+  MST: -6 * 60
+};
 
-const useClock = (date, timezone, offset) => {
+const useClock = (timezone, offset = 0) => {
   const [state, setState] = useState({ ...init });
+  const [utc, setUtc] = useState(null);
 
   useEffect(() => {
-    let utc = new Date(date);
-    if (timezone) {
-      // 
-    } else {
-      const offset = utc.getTimezoneOffset();
-      utc = addMinutes(utc, offset);
-    }
+    let d = new Date();
+    const localOffset = d.getTimezoneOffset();
+    d = addMinutes(d, -localOffset);
+    setUtc(d);
   }, []);
 
-  return {
-    clock: state,
-  };
+  useEffect(() => {
+    if (utc !== null) {
+      let tzOffset = offset;
+
+      tzOffset = TIMEZONE_OFFSET[timezone] ?? tzOffset;
+
+      const newUtc = addMinutes(utc, tzOffset);
+
+      setState((prev) => ({
+        ...prev,
+        date_utc0: utc,
+        date: newUtc,
+      }));
+    }
+  }, [utc, timezone, offset]);
+
+  return { clock: state };
 };
+
 export default useClock;
